@@ -1,0 +1,20 @@
+{
+  "name": "static-history-infographic-video",
+  "private": true,
+  "scripts": {
+    "lint": "tsc --noEmit",
+    "render": "remotion render src/index.tsx StaticHistoryInfographic ../out/candidates/candidate.mp4 --codec=h264 --audio-codec=aac --crf=18 --concurrency=2",
+    "still": "remotion still src/index.tsx StaticHistoryInfographic ../out/qa/first-frame.png --frame=0"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.506",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "remotion": "4.0.506"
+  },
+  "devDependencies": {
+    "@types/react": "19.0.0",
+    "@types/react-dom": "19.0.0",
+    "typescript": "5.9.3"
+  }
+}
