@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 from pathlib import Path
 
@@ -33,8 +34,8 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("project_root", type=Path)
     parser.add_argument("--title", required=True)
-    parser.add_argument("--voice-id", default="DowyQ68vDpgFYdWVGjc3")
-    parser.add_argument("--model-id", default="eleven_v3")
+    parser.add_argument("--voice-id", default=os.environ.get("ELEVENLABS_VOICE_ID"))
+    parser.add_argument("--model-id", default=os.environ.get("ELEVENLABS_MODEL_ID", "eleven_v3"))
     parser.add_argument(
         "--visual-style",
         choices=("warm-xuan-vox", "american-comic-vox"),
@@ -44,6 +45,8 @@ def main() -> None:
     parser.add_argument("--height", type=int, default=1920)
     parser.add_argument("--fps", type=int, default=30)
     args = parser.parse_args()
+    if not args.voice_id:
+        parser.error("provide --voice-id or set ELEVENLABS_VOICE_ID")
 
     root = args.project_root.expanduser().resolve()
     if root.exists() and any(root.iterdir()):

@@ -8,7 +8,7 @@
 
 对每次请求记录 voice ID model ID language stability seed request ID 原文 音频路径和 alignment
 
-本系列默认使用 `DowyQ68vDpgFYdWVGjc3` 与 `eleven_v3` 用户明确指定其他参数时才偏离并记录到 `project.json`
+每个项目必须在初始化时提供 voice ID 模型缺省为 `eleven_v3` 也可显式指定 所有实际参数写入 `project.json` 和最终 voice manifest
 
 ## 谐音文本
 

@@ -1,6 +1,6 @@
 ---
 name: make-static-history-video
-description: 制作中文竖屏静态历史信息图解说视频的完整生产流程 仅支持两种固定视觉预设 暖色宣纸 Vox 4.0 或美漫 Vox 使用 APIMart gpt-image-2 独立单图生成与口播完全对应的历史场景地图路线箭头和准确中文标签 使用 ElevenLabs eleven_v3 字符级对齐生成无标点字幕 配置 BGM 并由 Remotion 静态切镜合成和发布前 QA 用于两汉风云等历史科普 长短视频 一分钟测试 完整集 画面与台词一一对应或用户要求沿用第一集风格 美漫风格 配音字幕 BGM 和完整成片时
+description: 制作中文竖屏静态历史信息图解说视频的通用生产流程 适用于任意朝代 人物 战争 制度或历史专题 仅支持暖色宣纸 Vox 和美漫 Vox 两种视觉预设 使用 APIMart gpt-image-2 独立单图生成与口播对应的历史场景 地图 路线 箭头和准确中文标签 使用用户指定的 ElevenLabs voice ID 和模型取得字符级对齐 生成无标点字幕 配置 BGM 并由 Remotion 静态切镜合成和执行发布前 QA 用于一分钟测试 完整集 画面与台词一一对应 配音 字幕 BGM 和完整成片任务
 ---
 
 # 静态历史信息图视频
@@ -13,7 +13,7 @@ description: 制作中文竖屏静态历史信息图解说视频的完整生产�
 - Node.js 20 或更高版本
 - `ffmpeg` 和 `ffprobe` 必须能从 `PATH` 找到
 - 系统需安装 PingFang 黑体 微软雅黑或 Noto Sans CJK SC 之一 也可在字幕命令中使用 `--font` 指定字体文件
-- 只从环境变量读取 `APIMART_API_KEY` 和 `ELEVENLABS_API_KEY`
+- 只从环境变量读取 `APIMART_API_KEY` 和 `ELEVENLABS_API_KEY` voice ID 可由 `--voice-id` 或 `ELEVENLABS_VOICE_ID` 提供
 
 ```bash
 python3 -m pip install -r requirements.txt
@@ -28,7 +28,7 @@ command -v ffprobe
 - 视觉预设只能二选一 `warm-xuan-vox` 或 `american-comic-vox`
 - 未指定风格时默认 `warm-xuan-vox`
 - APIMart `gpt-image-2` 1K 独立单图 默认四并发 禁止宫格
-- 默认音色 `DowyQ68vDpgFYdWVGjc3` 默认模型 `eleven_v3`
+- 每个项目必须提供 ElevenLabs voice ID 模型默认 `eleven_v3` 也可显式指定
 - 台词信息 地图 路线 战争方向 章节文字直接烘焙进生成图
 - Remotion 只组装静态图 字幕 配音 BGM 和经批准的片尾卡
 - ElevenLabs 必须返回字符级 alignment
@@ -54,7 +54,7 @@ command -v ffprobe
 ```bash
 python3 scripts/init_project.py /absolute/project/path \
   --title "视频标题" \
-  --voice-id "DowyQ68vDpgFYdWVGjc3" \
+  --voice-id "用户的 ElevenLabs voice ID" \
   --model-id "eleven_v3"
 ```
 

@@ -48,7 +48,7 @@ def main() -> None:
     if visual_style not in allowed_styles:
         failures.append(f"unsupported-visual-style:{visual_style}")
     if project["settings"].get("image_provider") != "APIMart gpt-image-2 1K independent single-image generation":
-        warnings.append("image-provider-deviates-from-series-default")
+        warnings.append("image-provider-deviates-from-workflow-default")
 
     for frame in frames:
         frame_id = frame["frame_id"]
@@ -87,10 +87,10 @@ def main() -> None:
     if abs(cue_end - voice_end) > 0.25:
         failures.append(f"caption-end-mismatch:{cue_end}:{voice_end}")
 
+    if not project["voice"].get("voice_id") or not project["voice"].get("model_id"):
+        failures.append("voice-configuration-missing")
     if project["voice"]["voice_id"] != voice["voice_id"] or project["voice"]["model_id"] != voice["model_id"]:
         failures.append("voice-identity-mismatch")
-    if project["voice"]["voice_id"] != "DowyQ68vDpgFYdWVGjc3" or project["voice"]["model_id"] != "eleven_v3":
-        warnings.append("voice-deviates-from-series-default")
     if project["settings"]["production_mode"] != "static-infographic":
         warnings.append("production-mode-is-not-static-infographic")
 
