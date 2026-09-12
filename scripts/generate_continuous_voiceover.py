@@ -177,6 +177,8 @@ def main() -> None:
         **summary,
         "combined_wav": audio_wav.name,
         "combined_wav_duration_seconds": round(audio_duration, 3),
+        "chunk_joins": [],
+        "voice_continuity_qa_required": True,
         "shots": rows,
     }
     write_json(args.out / "voiceover_manifest.json", manifest)

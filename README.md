@@ -1,80 +1,101 @@
 # make-static-history-video
 
-面向 AI Agent 的中文竖屏静态历史信息图视频生产工作流
+一个给 AI Agent 使用的中文历史视频制作 Skill。
 
-它把已经确认的历史脚本转换为与口播逐段对应的 9:16 成片，覆盖分镜、生图、配音、字符级对齐、无标点字幕、BGM、Remotion 合成和发布前 QA。
+它会从选题和对标开始，带着用户依次完成写作包、完整文案、史实核查、配音、分镜、画面风格、人物母版、逐帧提示词、生图、剪辑和发布前检查。
 
-> 这不是单独运行一次命令就能自动出片的软件。Agent 负责理解脚本、拆镜、核对史实和审查画面；仓库中的脚本负责执行可重复的生产步骤。
+用户负责选题、审美和最终判断；Agent 负责整理资料、生成内容、推进流程和检查结果。
 
-## 固定规格
+> 这不是“一句话自动出片”的软件。它是一套可以恢复进度、保留确认门、减少整批返工的 Agent 工作方法。
 
-- 竖屏 1080×1920
-- 30fps
-- 静态信息图模式
-- 实际时长由最终配音和字符级 alignment 决定
-- APIMart `gpt-image-2` 1K 独立单图生成
-- 默认四并发
-- ElevenLabs voice ID 由每个项目显式提供
-- ElevenLabs 模型默认 `eleven_v3` 也可以修改
-- 字幕不含任何 Unicode 标点
-- Remotion 只负责静态画面、字幕、配音、BGM 和片尾卡合成
-- 候选片先进入 `out/candidates/`
-- 只有用户确认后才生成 `out/final.mp4`
+## 适合什么内容
 
-## 两种视觉风格
+- 中文历史故事与人物解说
+- 竖屏静态信息图视频
+- 需要多张画面保持人物一致的连续叙事
+- 需要把文案、配音、字幕和镜头准确对齐的项目
+- 已经做到一半，需要让 Agent 从正确位置继续的旧项目
 
-### 暖色宣纸 Vox
+正篇默认使用 9:16 竖屏。用户明确指定时，也支持 16:9 横版番外。
 
-预设名：`warm-xuan-vox`
-
-暖色旧宣纸、撕纸拼贴、旧地图、高密度木刻线条、低饱和土色和少量朱砂红。未指定风格时默认使用这一预设。
-
-### 美漫 Vox
-
-预设名：`american-comic-vox`
-
-粗重炭黑轮廓、受控网点、角向排线、丝网印刷质感，使用青蓝、珊瑚红、芥末黄、米白和炭黑。
-
-同一集只能使用一种预设，不能混搭，也不自动增加第三种风格。
-
-## 工作流程
+## 它会怎样工作
 
 ```text
-确认脚本与史实
-  → 拆分口播镜头和实体画面
-  → ElevenLabs 配音并取得字符级 alignment
-  → APIMart 为每个画面独立生图
-  → 原图审查和问题帧定向重生
-  → 根据 alignment 生成无标点字幕和时间轴
-  → 生成或配置 BGM
-  → Remotion 合成候选片
-  → 检查编码 响度 黑帧 静音 字幕和画面
-  → 用户确认
-  → 输出 out/final.mp4
+确定选题和平台
+  → 选择并拆解对标
+  → 建立写作包
+  → 完成文案与史实核查
+  → 确认配音和画面风格
+  → 根据最终配音拆分镜
+  → 为主要人物建立母版
+  → 为每张分镜生成独立提示词
+  → 先测试最难的画面
+  → 批量生图并定向修复问题帧
+  → 生成字幕和镜头时间线
+  → 合成候选视频并完成检查
+  → 用户确认后再进入正式文件
 ```
 
-## Agent 兼容方式
+每次继续项目时，Agent 只需要告诉用户五件事：
 
-这个仓库以 `SKILL.md` 作为工作流入口。任何能够读取本地文件、执行终端命令并调用 Python、Node.js 和 FFmpeg 的 Agent 都可以使用。
+1. 现在进行到哪里。
+2. Agent 接下来会做什么。
+3. 用户现在只需要确认什么。
+4. 这一步完成后会交付什么。
+5. 确认以后进入哪一步。
 
-- 支持 Skill 自动发现的 Agent：把整个仓库放入该 Agent 的 Skills 目录
-- 不支持 Skill 自动发现的 Agent：在任务中要求 Agent 完整读取本仓库的 `SKILL.md` 后执行
-- 不使用 Agent：可以按下方命令手动运行各阶段脚本
+## 四种固定画面风格
 
-不同 Agent 的 Skill 安装目录并不统一。本仓库不声称兼容所有产品的自动发现机制，但核心工作流和脚本不依赖 Codex 专用 API。
+- `warm-xuan-vox`：暖色宣纸、撕纸拼贴、旧地图和木刻线条。
+- `american-comic-vox`：粗重炭黑轮廓、网点印刷和大色块。
+- `knowledge-card`：历史百科知识卡片、地图、时间轴和准确中文讲解。
+- `qibaishi-xieyi`：从当前内容生长画面，用齐白石式写意组织笔墨和留白。
+
+同一条视频只选择一种风格，不混搭。
+
+## 人物一致性
+
+反复出现的主要人物在批量生图前，必须先建立：
+
+- 人物卡
+- 正面或半身母版
+- 全身母版
+
+母版锁定年龄、性别、脸型、发式、身形和服饰时代，但不锁死表情、动作、景别和构图。
+
+## 减少废图的方法
+
+每张分镜使用独立提示词。Agent 会在付费生成前检查：
+
+- 抽象台词是否已经变成可以直接看见的动作。
+- 人物、动作发起者、目标和方向是否清楚。
+- 服饰、器物、建筑和地理是否符合时代。
+- 竹简、旗帜、牌匾等表面是否可能产生乱码。
+- 模型最可能把当前画面误解成什么。
+- 每个否定限制是否都有明确的正确替代画面。
+
+正式批量前，先测试开场钩子、主要人物、复杂关系和高风险文字等三到五张困难画面。发现问题时只重做当前帧，不把整批图片推倒重来。
+
+## 配音和时间线
+
+当前内置脚本默认使用 ElevenLabs，并取得字符级时间信息。最终配音会同时决定字幕和镜头时间线。
+
+如果接入豆包或其他配音服务，也必须取得可靠的字级或词级时间信息，并通过同样的完整听审。不能用旧字幕时间码拼接新音色，也不能手工猜测镜头长度。
 
 ## 安装
 
-### 通用安装
+### 直接让 Agent 安装
 
-把仓库克隆到目标 Agent 可以访问的位置：
+把这个仓库地址发给支持 Skill 的 Agent，并告诉它：
 
-```bash
-git clone https://github.com/snailzsh/make-static-history-video.git \
-  /absolute/path/to/agent-skills/make-static-history-video
+```text
+请安装这个 Skill：
+https://github.com/snailzsh/make-static-history-video
+
+安装完成后检查 SKILL.md、references、scripts 和 tests 是否完整。
 ```
 
-### Codex 安装示例
+### Codex 手动安装
 
 ```bash
 mkdir -p ~/.codex/skills
@@ -82,214 +103,79 @@ git clone https://github.com/snailzsh/make-static-history-video.git \
   ~/.codex/skills/make-static-history-video
 ```
 
-安装完成后新开一个 Codex 任务，使 Skill 被重新发现。其他 Agent 是否需要重启或重新索引，以对应产品的加载机制为准。
-
-更新已经安装的版本：
+已经安装过时：
 
 ```bash
 git -C ~/.codex/skills/make-static-history-video pull --ff-only
 ```
 
-### 安装运行依赖
+安装或更新后，新开一个任务，让 Agent 重新发现 Skill。
 
-需要：
+## 如何开始使用
+
+安装完成后，把下面这段话发给 Agent：
+
+```text
+使用 make-static-history-video，带我从选题和对标开始，制作一条历史故事视频。
+你负责主动推进，每一步只告诉我：现在做到哪里、你会做什么、我需要确认什么。
+配音默认使用 ElevenLabs，也可以让我选择豆包。
+主要人物先做人物母版，正式生图前先测试最难的三到五张。
+只把通过检查的候选视频交给我，未经我确认不要进入正式发布。
+```
+
+如果已经有选题，可以继续补充：
+
+```text
+这次的主题是：［填写选题］
+发布平台是：［抖音 / 视频号 / 小红书］
+大概时长是：［填写时长］
+```
+
+## 运行环境
 
 - Python 3.11 或更高版本
 - Node.js 20 或更高版本
-- `ffmpeg` 和 `ffprobe`
-- PingFang、黑体、微软雅黑或 Noto Sans CJK SC 中文字体之一
-
-安装 Python 依赖：
+- FFmpeg 与 FFprobe
+- 可用的中文字体
+- APIMart API Key
+- ElevenLabs API Key
 
 ```bash
-cd /absolute/path/to/agent-skills/make-static-history-video
 python3 -m pip install -r requirements.txt
 ```
 
-确认媒体工具可用：
+API Key 只通过环境变量提供，不要写入项目文件、日志或截图：
 
 ```bash
-command -v ffmpeg
-command -v ffprobe
+export APIMART_API_KEY="你的 APIMart API Key"
+export ELEVENLABS_API_KEY="你的 ElevenLabs API Key"
 ```
 
-## 配置 API Key
+## 主要检查项
 
-运行时需要两个 API Key。voice ID 可以通过环境变量或项目初始化参数提供：
+- 人物、年代、地理、制度和事件因果。
+- 人物身份、服饰、器物、方向和图中文字。
+- 配音断字、漏字、异常换气、音色跳变和重叠。
+- 字幕与镜头是否来自同一条最终配音。
+- 每一个画面切点、黑帧、长静音、编码和响度。
 
-```bash
-export APIMART_API_KEY="你的真实 APIMart API Key"
-export ELEVENLABS_API_KEY="你的真实 ElevenLabs API Key"
-export ELEVENLABS_VOICE_ID="你的 ElevenLabs voice ID"
-```
+所有生成结果先进入候选目录。只有检查通过并得到用户确认后，才允许进入正式文件。
 
-只把 Key 存在环境变量或本机私有配置中。不要提交 `.env`、不要把 Key 写进 `project.json`，也不要在截图或终端回显中公开。
-
-检查变量是否存在但不显示真实值：
-
-```bash
-python3 -c 'import os; print("APIMart set" if os.getenv("APIMART_API_KEY") else "APIMart missing")'
-python3 -c 'import os; print("ElevenLabs set" if os.getenv("ELEVENLABS_API_KEY") else "ElevenLabs missing")'
-python3 -c 'import os; print("Voice ID set" if os.getenv("ELEVENLABS_VOICE_ID") else "Voice ID missing")'
-```
-
-## 在 Agent 中使用
-
-新建任务，附上经过确认的脚本。支持 Skill 调用语法的 Agent 可以直接调用名称；其他 Agent 则提供 `SKILL.md` 的路径并要求完整读取。
-
-一分钟测试：
+## 仓库结构
 
 ```text
-使用 $make-static-history-video 制作一集中国历史科普视频
-风格使用暖色宣纸 Vox
-voice ID 使用我提供的 ElevenLabs 音色
-使用现有脚本的前 60 到 90 秒做测试
-先输出候选片和 QA 结果
+SKILL.md                 Skill 入口和完整工作流
+agents/                  Agent 展示信息
+references/              项目、人物、提示词、声音和发布规范
+scripts/                 可重复执行的制作与检查脚本
+tests/                   项目导航、人物母版和提示词预检测试
+assets/remotion-template 静态视频合成模板
 ```
 
-美漫完整版：
+## 安全边界
 
-```text
-使用 $make-static-history-video 制作历史科普完整版
-风格使用美漫 Vox
-voice ID 使用项目配置 模型使用 eleven_v3
-时长按配音自然时长决定
-完成后先交付 out/candidates 中的候选片
-```
-
-沿用默认参数：
-
-```text
-使用 $make-static-history-video 按固定工作流制作新一集
-脚本已经附上
-voice ID 使用 ELEVENLABS_VOICE_ID 环境变量
-先核对内容和分镜再进入付费生成
-```
-
-不支持 Skill 调用语法的 Agent 可使用：
-
-```text
-完整读取 /absolute/path/to/make-static-history-video/SKILL.md
-严格按其中的阶段门制作附件中的历史脚本
-不要跳过生图审查 字幕零标点检查和候选片 QA
-```
-
-如果没有指定风格，Skill 使用 `warm-xuan-vox`。
-
-## 最小输入
-
-开始制作前至少提供：
-
-1. 已确认的口播脚本或历史资料
-2. 集数和标题
-3. ElevenLabs voice ID
-4. 使用暖色宣纸 Vox 或美漫 Vox
-5. 先做测试版还是直接做完整版
-
-模型、画幅和字幕规则可以省略，此时使用工作流默认值。voice ID 不再使用任何作者私人默认值，必须通过任务、命令参数或 `ELEVENLABS_VOICE_ID` 提供。
-
-## 手动执行主要脚本
-
-通常由 Agent 调用。需要排查单个阶段时，可以手动执行。
-
-初始化项目：
-
-```bash
-python3 scripts/init_project.py /absolute/path/to/project \
-  --title "第四集标题" \
-  --voice-id "你的 ElevenLabs voice ID" \
-  --visual-style warm-xuan-vox
-```
-
-生成连续配音：
-
-```bash
-python3 scripts/generate_continuous_voiceover.py \
-  --project /absolute/path/to/project/project.json \
-  --out /absolute/path/to/project/voice-continuous-candidate
-```
-
-连续请求失败后，按镜头边界分块：
-
-```bash
-python3 scripts/generate_chunked_voiceover.py \
-  --project /absolute/path/to/project/project.json \
-  --out /absolute/path/to/project/voice \
-  --max-chars 430
-```
-
-生成独立信息图：
-
-```bash
-python3 scripts/generate_apimart_images.py /absolute/path/to/project
-```
-
-生成字幕和时间轴：
-
-```bash
-python3 scripts/build_aligned_captions.py \
-  --project /absolute/path/to/project/project.json \
-  --voice-manifest /absolute/path/to/project/voice/voiceover_manifest.json \
-  --pronunciation /absolute/path/to/project/pronunciation.json \
-  --caption-dir /absolute/path/to/project/captions
-
-python3 scripts/build_timeline.py /absolute/path/to/project
-```
-
-生成 BGM 并同步 Remotion 素材：
-
-```bash
-python3 scripts/generate_original_bgm.py /absolute/path/to/project
-python3 scripts/sync_remotion_assets.py /absolute/path/to/project
-```
-
-渲染候选片：
-
-```bash
-cd /absolute/path/to/project/remotion
-npm install --no-audit --no-fund
-npm run lint
-npm run still
-npm run render
-```
-
-运行项目检查：
-
-```bash
-python3 scripts/validate_project.py /absolute/path/to/project
-```
-
-## 输出结构
-
-```text
-project.json
-source/original-script.md
-prompts/frame-prompts.json
-storyboards/production-storyboard.json
-storyboards/frame-manifest.json
-storyboards/timeline.json
-assets/source-images/
-assets/backgrounds/
-voice/voiceover_full_48k.wav
-voice/voiceover_manifest.json
-captions/subtitles.srt
-captions/caption-manifest.json
-captions/overlays/
-audio/music/bed.wav
-out/candidates/candidate.mp4
-out/qa/release.json
-out/final.mp4
-```
-
-## 生产限制
-
-- 不用旧图循环顶替新台词
-- 不使用九宫格或四宫格后裁切
-- 不用 Remotion 叠加场景文字修补生图错字
-- 不在没有 alignment 时猜字幕时间
-- 不把静态画面推拉称为动画
-- 不混用不同音色或模型的配音片段
-- 不接受错字、伪文字、现代旗帜、错误地图方向或跨时代建筑
-- 不直接覆盖已经批准的正式文件
-
-更完整的执行合同见 [SKILL.md](SKILL.md)，视觉、配音和 QA 细则位于 [references](references/) 目录。
+- 不提交任何 API Key、`.env`、真实账号信息或私人项目素材。
+- 不在脚本和史实未确认前自动进入付费批量生成。
+- 不用旧图代替新分镜，不用后期叠字掩盖生图错误。
+- 不把“生成完成”当成“检查通过”或“已经发布”。
+- 不经用户确认覆盖正式成片。

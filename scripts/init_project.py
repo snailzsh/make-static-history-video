@@ -9,13 +9,18 @@ import os
 import shutil
 from pathlib import Path
 
+from manage_workflow import default_workflow
+
 
 DIRECTORIES = (
     "source",
+    "writing-pack",
     "prompts",
     "storyboards",
     "assets/backgrounds",
     "assets/source-images",
+    "characters/anchors",
+    "characters/source-anchors",
     "voice",
     "captions/overlays",
     "audio/music",
@@ -23,6 +28,7 @@ DIRECTORIES = (
     "out/candidates",
     "out/qa",
     "logs",
+    "feedback",
 )
 
 
@@ -34,19 +40,34 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("project_root", type=Path)
     parser.add_argument("--title", required=True)
+    parser.add_argument(
+        "--guided",
+        action="store_true",
+        help="initialize pre-production workflow without requiring confirmed voice or visual settings",
+    )
     parser.add_argument("--voice-id", default=os.environ.get("ELEVENLABS_VOICE_ID"))
     parser.add_argument("--model-id", default=os.environ.get("ELEVENLABS_MODEL_ID", "eleven_v3"))
     parser.add_argument(
         "--visual-style",
-        choices=("warm-xuan-vox", "american-comic-vox"),
-        default="warm-xuan-vox",
+        choices=("warm-xuan-vox", "american-comic-vox", "knowledge-card", "qibaishi-xieyi"),
+        default=None,
     )
+    parser.add_argument("--subtitle-mode", choices=("rendered", "none"), default="rendered")
     parser.add_argument("--width", type=int, default=1080)
     parser.add_argument("--height", type=int, default=1920)
     parser.add_argument("--fps", type=int, default=30)
     args = parser.parse_args()
-    if not args.voice_id:
+    if not args.voice_id and not args.guided:
         parser.error("provide --voice-id or set ELEVENLABS_VOICE_ID")
+
+    visual_style = args.visual_style or (None if args.guided else "warm-xuan-vox")
+
+    if args.width * 9 == args.height * 16:
+        aspect_ratio = "16:9"
+    elif args.width * 16 == args.height * 9:
+        aspect_ratio = "9:16"
+    else:
+        aspect_ratio = f"{args.width}:{args.height}"
 
     root = args.project_root.expanduser().resolve()
     if root.exists() and any(root.iterdir()):
@@ -62,8 +83,11 @@ def main() -> None:
             "language": "zh-CN",
             "production_mode": "static-infographic",
             "image_provider": "APIMart gpt-image-2 1K independent single-image generation",
-            "visual_style": args.visual_style,
-            "image_generation_mode": "independent 9:16 1K images concurrency four no grid",
+            "visual_style": visual_style,
+            "subtitle_mode": args.subtitle_mode,
+            "caption_sidecar_for_alignment_only": args.subtitle_mode == "none",
+            "aspect_ratio": aspect_ratio,
+            "image_generation_mode": f"independent {aspect_ratio} 1K images concurrency four no grid",
             "canvas": {"width": args.width, "height": args.height},
             "fps": args.fps,
             "caption_safe_zone_bottom_percent": 18,
@@ -74,30 +98,36 @@ def main() -> None:
         },
         "voice": {
             "provider": "ElevenLabs",
-            "voice_id": args.voice_id,
+            "voice_id": args.voice_id or "",
             "model_id": args.model_id,
             "language_code": "zh",
             "stability": 0.5,
             "generation_mode": "single_continuous_request_with_chunked_fallback_at_shot_boundaries",
             "alignment_endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps",
             "scripted_pauses": {},
+            "voice_continuity_qa_required": True,
         },
         "publish": {
-            "platforms": ["微信公众号", "抖音", "X"],
+            "platforms": [] if args.guided else ["微信公众号", "抖音", "X"],
             "title_punctuation": "none",
         },
         "approvals": {
             "source_ready": False,
             "script_confirmed": False,
             "storyboard_confirmed": False,
-            "settings_confirmed": True,
+            "character_anchors_confirmed": False,
+            "paid_generation_confirmed": False,
+            "settings_confirmed": not args.guided,
             "assets_ready": False,
             "voice_generated": False,
+            "voice_continuity_passed": False,
             "assembled": False,
             "captioned": False,
             "qc_passed": False,
+            "final_promotion": False,
             "publish_copy_ready": False,
         },
+        "workflow": default_workflow(),
         "shots": [],
     }
     write_json(root / "project.json", project)

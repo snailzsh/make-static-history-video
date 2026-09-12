@@ -1,4 +1,4 @@
 interface:
   display_name: "静态历史信息图视频"
-  short_description: "用暖色宣纸或美漫两种固定风格制作竖屏历史信息图视频"
-  default_prompt: "Use $make-static-history-video to turn my approved history script into a vertical static infographic video using either warm-xuan-vox or american-comic-vox with aligned voice punctuation-free subtitles BGM and release QA."
+  short_description: "用四种固定风格和人物母版制作历史信息图视频并完成发布质检"
+  default_prompt: "Use $make-static-history-video to turn my approved history script into a static history infographic video using warm-xuan-vox, american-comic-vox, knowledge-card, or qibaishi-xieyi, with confirmed character anchors for recurring identities, aligned voice, optional rendered captions, BGM, voice-continuity review, and release QA."

@@ -2,6 +2,7 @@ import React from 'react';
 import {AbsoluteFill, Audio, Img, Sequence, staticFile} from 'remotion';
 import timelineData from '../../storyboards/timeline.json';
 import captionData from '../../captions/caption-manifest.json';
+import projectData from '../../project.json';
 
 type TimelineEntry = {
   type: 'image' | 'endcard' | 'black';
@@ -21,6 +22,7 @@ type CaptionCue = {
 
 const entries = timelineData.entries as TimelineEntry[];
 const cues = captionData.cues as CaptionCue[];
+const showCaptions = projectData.settings?.subtitle_mode !== 'none';
 
 const EndCard: React.FC<{entry: TimelineEntry}> = ({entry}) => (
   <AbsoluteFill
@@ -54,7 +56,7 @@ export const Episode: React.FC = () => (
     ))}
     <Audio src={staticFile('audio/voiceover_full_48k.wav')} />
     <Audio src={staticFile('audio/bed.wav')} />
-    {cues.map((cue, index) => {
+    {showCaptions ? cues.map((cue, index) => {
       const start = Math.round(cue.start_seconds * timelineData.fps);
       const end = Math.round(cue.end_seconds * timelineData.fps);
       return (
@@ -62,6 +64,6 @@ export const Episode: React.FC = () => (
           <Img src={staticFile(`captions/${cue.overlay_file.split('/').pop()}`)} style={{width: '100%', height: '100%'}} />
         </Sequence>
       );
-    })}
+    }) : null}
   </AbsoluteFill>
 );

@@ -28,6 +28,42 @@ TTS 文本可为改善发音使用谐音字
 - 保存 chunk 到 shot 的显式映射
 - 废弃候选不得和最终候选混在同一目录
 
+## 配音连续性发布门
+
+自动媒体指标不能证明口播流畅 最终音频必须通过完整人工听审
+
+- 用耳机以 1× 速度完整听审最终旁白 不跳过长段落
+- 对每个 chunk 接缝前后至少 3 秒单独复听 同时检查未加速源音频和加速后最终音频
+- 未预期吸气或呼气 句内断气 词内断裂 首尾音节被截断 重字 漏字 点击声 爆音 音色 响度 音高 语速或节奏突变都是失败
+- 任何两段旁白同时播放均是失败 必须在 voice manifest 时间区间和最终剪辑工程中同时检查重叠
+- 不用交叉淡化 音乐遮盖或增大背景噪声来伪装修复不流畅接缝 只重生受影响的 chunk
+- 把结果写入 `out/qa/voice-continuity-review.json` 至少记录候选音频哈希 完整听审 接缝数 失败时间码 重叠数 复核人和 `result`
+- `result` 必须为 `pass` 才能将 `project.json.approvals.voice_continuity_passed` 和 `qc_passed` 设为 true
+
+最小通过报告：
+
+```json
+{
+  "candidate_audio_sha256": "<sha256>",
+  "full_playback_reviewed": true,
+  "chunk_joins_expected": 10,
+  "chunk_joins_reviewed": 10,
+  "failure_timestamps": [],
+  "overlap_count": 0,
+  "reviewer": "<name or agent>",
+  "result": "pass"
+}
+```
+
+`chunk_joins_expected` 来自 `voiceover_manifest.json.chunk_joins` 长度 连续单次请求为 0
+
+## 更换音色与 SRT
+
+- SRT 时间码只对应生成它的那条最终音频 不是另一个音色的配音排期
+- 不把旧 SRT 切成的短 cue 逐条送入新音色 新音色的语速和停顿不同 会使生成片段溢出旧 cue 并在剪辑软件中叠成多条音轨
+- 更换音色时使用带标点的完整 `voiceover_text` 生成一条连续音频 服务不稳定时才按长语义段落或镜头边界分块
+- 新音频确定后从它的 alignment 重新生成 SRT 画面 timeline 和候选片 不用拉伸旧字幕硬套
+
 ## 速度
 
 ElevenLabs 当前产品文档明确写明 `eleven_v3` 不支持 Speed 设置 因此 v3 请求不发送该字段 需要加速时使用生成后的 `atempo`
@@ -47,3 +83,4 @@ ElevenLabs 当前产品文档明确写明 `eleven_v3` 不支持 Speed 设置 因
 - 位于底部安全区 保留左右至少 40px 底部至少 120px
 - 可使用 PingFang SC Noto Sans CJK SC Microsoft YaHei 后备
 - 预渲染 RGBA overlay 并检查 alpha bbox
+- `subtitle_mode: none` 时仍保留 alignment 和完整 SRT 侧车 但不渲染 overlay 候选片字幕流数必须为 0

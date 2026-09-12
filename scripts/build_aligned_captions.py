@@ -188,6 +188,9 @@ def main() -> None:
     project = json.loads(args.project.read_text(encoding="utf-8"))
     manifest = json.loads(args.voice_manifest.read_text(encoding="utf-8"))
     pronunciation = json.loads(args.pronunciation.read_text(encoding="utf-8"))
+    subtitle_mode = project["settings"].get("subtitle_mode", "rendered")
+    if subtitle_mode not in {"rendered", "none"}:
+        raise SystemExit(f"Unsupported subtitle_mode: {subtitle_mode}")
     shots = {shot["shot_id"]: shot for shot in project["shots"]}
     voice_dir = args.voice_manifest.parent
     overlay_dir = args.caption_dir / "overlays"
@@ -200,8 +203,8 @@ def main() -> None:
     canvas = project["settings"]["canvas"]
     width, height = int(canvas["width"]), int(canvas["height"])
     font_size = round(64 * height / 1920)
-    font_path = resolve_font(args.font)
-    font = ImageFont.truetype(str(font_path), font_size)
+    font_path = resolve_font(args.font) if subtitle_mode == "rendered" else None
+    font = ImageFont.truetype(str(font_path), font_size) if font_path else None
 
     cues: list[dict] = []
     for voice_shot in manifest["shots"]:
@@ -260,10 +263,13 @@ def main() -> None:
                 }
             )
 
-    for index, cue in enumerate(cues, 1):
-        overlay = overlay_dir / f"cue_{index:03d}.png"
-        render_overlay(cue["text"], overlay, font, width, height)
-        cue["overlay_file"] = f"overlays/{overlay.name}"
+    if subtitle_mode == "rendered":
+        if font is None:
+            raise SystemExit("Rendered subtitles require a font")
+        for index, cue in enumerate(cues, 1):
+            overlay = overlay_dir / f"cue_{index:03d}.png"
+            render_overlay(cue["text"], overlay, font, width, height)
+            cue["overlay_file"] = f"overlays/{overlay.name}"
 
     srt_path = args.caption_dir / "subtitles.srt"
     srt_path.write_text(
@@ -275,7 +281,9 @@ def main() -> None:
     )
     write_value = {
         "canvas": {"width": width, "height": height},
-        "font": {"requested": str(args.font) if args.font else "auto", "resolved_name": font_path.name, "size": font_size},
+        "subtitle_mode": subtitle_mode,
+        "overlays_rendered": subtitle_mode == "rendered",
+        "font": {"requested": str(args.font) if args.font else "auto", "resolved_name": font_path.name, "size": font_size} if font_path else None,
         "srt_file": "subtitles.srt",
         "cue_count": len(cues),
         "cues": cues,

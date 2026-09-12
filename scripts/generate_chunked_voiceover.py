@@ -69,11 +69,24 @@ def fetch_chunk(
     seed: int,
     api_key: str,
     speed: float,
+    previous_text: str | None,
+    next_text: str | None,
+    previous_request_ids: list[str],
 ) -> dict:
     text = "\n".join(shot["voiceover_text"].strip() for shot in shots)
     fingerprint = hashlib.sha256(
         json.dumps(
-            {"text": text, "voice_id": voice["voice_id"], "model_id": voice["model_id"], "stability": voice.get("stability", 1.0), "speed": speed, "seed": seed},
+            {
+                "text": text,
+                "voice_id": voice["voice_id"],
+                "model_id": voice["model_id"],
+                "stability": voice.get("stability", 1.0),
+                "speed": speed,
+                "seed": seed,
+                "previous_text": previous_text,
+                "next_text": next_text,
+                "previous_request_ids": previous_request_ids,
+            },
             ensure_ascii=False,
             sort_keys=True,
         ).encode("utf-8")
@@ -94,18 +107,26 @@ def fetch_chunk(
     voice_settings = {"stability": float(voice.get("stability", 1.0))}
     if voice["model_id"] != "eleven_v3":
         voice_settings["speed"] = speed
+    payload = {
+        "text": text,
+        "model_id": voice["model_id"],
+        "language_code": voice.get("language_code", "zh"),
+        "voice_settings": voice_settings,
+        "seed": seed,
+        "apply_text_normalization": "auto",
+    }
+    request_stitching_supported = voice["model_id"] != "eleven_v3"
+    if request_stitching_supported and previous_text:
+        payload["previous_text"] = previous_text
+    if request_stitching_supported and next_text:
+        payload["next_text"] = next_text
+    if request_stitching_supported and previous_request_ids:
+        payload["previous_request_ids"] = previous_request_ids
     try:
         response = session.post(
             endpoint,
             headers={"xi-api-key": api_key, "Content-Type": "application/json"},
-            json={
-                "text": text,
-                "model_id": voice["model_id"],
-                "language_code": voice.get("language_code", "zh"),
-                "voice_settings": voice_settings,
-                "seed": seed,
-                "apply_text_normalization": "auto",
-            },
+            json=payload,
             timeout=(30, 360),
         )
     except requests.RequestException as exc:
@@ -141,6 +162,12 @@ def fetch_chunk(
         "duration_seconds": round(media_duration(wav_path), 6),
         "alignment": alignment,
         "normalized_alignment": body.get("normalized_alignment"),
+        "continuity_context": {
+            "request_stitching_supported": request_stitching_supported,
+            "previous_text_characters": len(previous_text or ""),
+            "next_text_characters": len(next_text or ""),
+            "previous_request_ids": previous_request_ids,
+        },
     }
     write_json(meta_path, meta)
     return meta
@@ -163,6 +190,8 @@ def main() -> None:
     voice = project["voice"]
     forced_pauses = {str(key): float(value) for key, value in voice.get("scripted_pauses", {}).items()}
     chunks = chunk_shots(shots, args.max_chars, forced_pauses)
+    chunk_texts = ["\n".join(shot["voiceover_text"].strip() for shot in chunk) for chunk in chunks]
+    context_characters = 300
     summary = [
         {
             "chunk": index,
@@ -197,13 +226,44 @@ def main() -> None:
         if not 1 <= args.only_chunk <= len(chunks):
             raise SystemExit(f"--only-chunk must be 1..{len(chunks)}")
         index = args.only_chunk
-        meta = fetch_chunk(session, chunk_dir, index, chunks[index - 1], voice, args.seed + index, api_key, args.speed)
+        previous_text = chunk_texts[index - 2][-context_characters:] if index > 1 else None
+        next_text = chunk_texts[index][:context_characters] if index < len(chunks) else None
+        meta = fetch_chunk(
+            session,
+            chunk_dir,
+            index,
+            chunks[index - 1],
+            voice,
+            args.seed + index,
+            api_key,
+            args.speed,
+            previous_text,
+            next_text,
+            [],
+        )
         print(json.dumps({"chunk": index, "duration": meta["duration_seconds"], "request_id": meta["request_id"], "speed": args.speed}, ensure_ascii=False))
         return
 
     metas: list[dict] = []
     for index, chunk in enumerate(chunks, 1):
-        meta = fetch_chunk(session, chunk_dir, index, chunk, voice, args.seed + index, api_key, args.speed)
+        previous_text = chunk_texts[index - 2][-context_characters:] if index > 1 else None
+        next_text = chunk_texts[index][:context_characters] if index < len(chunks) else None
+        previous_request_ids = [
+            meta["request_id"] for meta in metas[-3:] if meta.get("request_id")
+        ]
+        meta = fetch_chunk(
+            session,
+            chunk_dir,
+            index,
+            chunk,
+            voice,
+            args.seed + index,
+            api_key,
+            args.speed,
+            previous_text,
+            next_text,
+            previous_request_ids,
+        )
         metas.append(meta)
         print(json.dumps({"chunk": index, "duration": meta["duration_seconds"], "request_id": meta["request_id"]}, ensure_ascii=False), flush=True)
 
@@ -297,6 +357,25 @@ def main() -> None:
         global_cursor += forced_pauses.get(chunk[-1]["shot_id"], 0.0)
 
     combined_duration = media_duration(combined)
+    chunk_joins: list[dict] = []
+    chunk_cursor = 0.0
+    for index, (chunk, meta) in enumerate(zip(chunks, metas)):
+        speech_end = chunk_cursor + float(meta["render_duration_seconds"])
+        pause = forced_pauses.get(chunk[-1]["shot_id"], 0.0)
+        next_start = speech_end + pause
+        if index + 1 < len(metas):
+            chunk_joins.append(
+                {
+                    "from_chunk": meta["chunk_number"],
+                    "to_chunk": metas[index + 1]["chunk_number"],
+                    "speech_end_seconds": round(speech_end, 3),
+                    "next_start_seconds": round(next_start, 3),
+                    "scripted_pause_seconds": pause,
+                    "review_window_start_seconds": round(max(0.0, speech_end - 3.0), 3),
+                    "review_window_end_seconds": round(min(combined_duration, next_start + 3.0), 3),
+                }
+            )
+        chunk_cursor = next_start
     write_json(
         args.out / "voiceover_manifest.json",
         {
@@ -312,6 +391,8 @@ def main() -> None:
             "combined_wav": combined.name,
             "combined_wav_duration_seconds": round(combined_duration, 3),
             "scripted_pauses": forced_pauses,
+            "chunk_joins": chunk_joins,
+            "voice_continuity_qa_required": True,
             "chunks": [
                 {key: meta[key] for key in ("chunk_number", "shot_ids", "request_id", "wav_file", "duration_seconds", "render_wav_file", "render_duration_seconds", "timeline_scale")}
                 for meta in metas
