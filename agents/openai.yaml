@@ -1,4 +1,4 @@
 interface:
-  display_name: "静态历史信息图视频"
-  short_description: "用四种固定风格和人物母版制作历史信息图视频并完成发布质检"
-  default_prompt: "Use $make-static-history-video to turn my approved history script into a static history infographic video using warm-xuan-vox, american-comic-vox, knowledge-card, or qibaishi-xieyi, with confirmed character anchors for recurring identities, aligned voice, optional rendered captions, BGM, voice-continuity review, and release QA."
+  display_name: "静态历史解说视频生产线"
+  short_description: "从新项目启动到静态历史解说成片，复用分镜、人物母版、配音对齐、验收和结项 SOP"
+  default_prompt: "用 $make-static-history-video 启动一个新的历史解说项目，先检查资料并建立 brief、生产合同、分镜和费用预览，再按已获批准的范围完成候选与 QA，结项时记录可复用方法。"

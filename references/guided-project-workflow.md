@@ -6,7 +6,7 @@
 
 ## 每轮交互
 
-只展示当前阶段的五项信息
+简要展示当前阶段的五项信息；已有授权内可连续推进多个阶段，不为这些提示反复请求确认
 
 - 现在进行到 当前阶段和目的
 - 我现在会做 当前可以自主完成的工作
@@ -55,10 +55,10 @@ START
 | PRODUCTION_CONTRACT | 锁定单一视觉预设 配音 字幕 画幅 生成批次 成本和验收范围 | `project.json` 与分镜草案 | 用户确认付费范围和质量门 |
 | STORYBOARD | 先建立配音所需的内容镜头 `project.json.shots` 和实体帧草案 不在此阶段猜最终秒数 | `storyboards/production-storyboard.json` `storyboards/frame-manifest.json` | 用户确认内容分镜和代表性段落 |
 | VOICE | 从已确认的 shots 连续生成 ElevenLabs 配音和 alignment 必要时按镜头分块 再据此生成精确时间轴 | `voice/voiceover_manifest.json` `storyboards/timeline.json` | 完整听审和接缝检查通过 |
-| VISUAL_STYLE | 只在四个预设中选择一个 先做钩子 人物 地图 高密度文字压力帧 | 压力帧和审图记录 | 用户确认样图 |
+| VISUAL_STYLE | 只在四个预设中选择一个 登记参考用途与压力帧计划 此阶段不提前生成 strict 角色场景 | 单一风格与压力帧计划 | 风格符合当前合同 |
 | CHARACTER_ANCHORS | 识别重复人物 为需要严格一致性的角色建立人物卡 脸部母版和全身母版 非重复角色可跳过 | `characters/character-manifest.json` `characters/anchors/` | 必需母版均经用户确认 或明确跳过 |
 | IMAGE_PROMPTS | 逐帧生成提示词 `required_text` 和必要的 `text_plan` | `prompts/frame-prompts.json` | 提示词与帧编号一一对应 |
-| IMAGE_GENERATION | APIMart 独立单图四并发 批量生成并保存原图 台账和哈希 | `assets/source-images/` `assets/backgrounds/` | 全部实体帧存在 |
+| IMAGE_GENERATION | 母版确认后先做钩子 人物 地图 文字压力帧 样图通过后按已批准范围独立单图四并发 保存原图 台账和哈希 | `assets/source-images/` `assets/backgrounds/` | 全部实体帧存在 |
 | ASSET_QC | 原尺寸检查语义 史实 地理 时代 文字 安全区和风格 | 冻结 frame manifest 与 repair 日志 | P0 P1 图像问题为零 |
 | MUSIC | 选择原创或可追溯授权 BGM 或明确跳过 | `audio/music/bed.wav` 或跳过记录 | 用户确认或跳过 |
 | CANDIDATE | 用 Remotion 静态切镜组装候选 不晋级正式文件 | `out/candidates/*.mp4` | 候选存在且可播放 |
@@ -82,7 +82,7 @@ START
 - 只有当前阶段为 `已确认` 或 `已跳过` 时才能进入下一阶段
 - 任一阶段返工时回到最早受影响阶段 后续产物保留但视为未重新验证 不删除
 - 严格连续角色的母版未确认时 `IMAGE_PROMPTS` 和 `IMAGE_GENERATION` 不得开始 人物首次出现和后续出现都必须引用同一角色 ID 与已确认母版
-- 状态确认不等于授权付费 调用登录态 批量生图 正式晋级 上传或发布 这些动作仍按当前用户授权单独核对
+- 状态确认本身不创造付费、私人数据读取、正式晋级或发布授权；已有明确批准在同目标、同内容、同数量和成本范围内持续有效，引用原依据后继续，不因阶段或 Skill 切换重复询问
 - `FINAL_PROMOTION` 只有 `approvals.qc_passed` 为 true `approvals.final_promotion` 为 true 且 `out/final.mp4` 存在时才能标记为 `已确认`
 
 使用 `scripts/manage_workflow.py` 为旧项目补充状态 校验 摘要 标记和顺序迁移

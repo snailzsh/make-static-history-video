@@ -13,7 +13,7 @@
 
 `project.json.workflow` 保存从选题到发布反馈的引导状态 包括当前阶段 各阶段状态 待确认问题 已登记产物和迁移历史 它只描述进度 不复制 `settings` `voice` `approvals` `shots` 中的生产事实
 
-用户对某个阶段说继续或可以 只允许把当前展示的确认门标为 `已确认` 不授权后续付费调用 批量生图 正式晋级 上传或发布
+用户说继续或可以应结合当前具体预览和既有授权判断；状态字段不自动创造付费、晋级或发布授权。已经明确批准且范围未变的工作持续执行，不逐阶段重复请求批准。
 
 `project.json.settings.visual_style` 只允许 `warm-xuan-vox` `american-comic-vox` `knowledge-card` 或 `qibaishi-xieyi`
 

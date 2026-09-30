@@ -25,6 +25,8 @@
 ## 命令
 
 ```bash
+ffmpeg -v error -xerror -i out/candidates/candidate.mp4 -f null -
+
 ffprobe -v error -count_frames \
   -show_entries format=duration,size:stream=codec_name,codec_type,width,height,r_frame_rate,nb_read_frames,sample_rate,channels \
   -of json out/candidates/candidate.mp4
@@ -52,6 +54,30 @@ python3 scripts/qa_cut_boundaries.py /absolute/project/path \
 - 不得用总帧数正确替代切点检查 总帧数正确仍可能有延迟换图或非关键帧切换
 - `qa_cut_boundaries.py` 必须对每个相邻画面检查 timeline 连续 PTS 连续 关键帧和解码后内容归属
 - 任何切点缺关键帧 出现重复帧 黑帧 跳帧或延迟换图都是发布阻断
+
+基础 Remotion 模板的 `npm run render` 不显式强制 timeline 切点关键帧，因此其输出只是待 QA 的基础候选。最终编码必须从当前 timeline 计算所有非零画面起始帧的秒数，把逗号分隔列表交给 FFmpeg `-force_key_frames`；不能因为命令退出成功就跳过切点检查。
+
+在项目根目录提取精确切点：
+
+```bash
+python3 - <<'PY'
+import json
+from pathlib import Path
+t = json.loads(Path('storyboards/timeline.json').read_text())
+starts = sorted({e['start_frame'] for e in t['entries'] if e['start_frame'] > 0})
+print(','.join(f"{frame / t['fps']:.9f}" for frame in starts))
+PY
+```
+
+最终编码使用明确的新候选文件名，固定项目 fps、H.264/yuv420p、上述关键帧列表与 AAC 48kHz。响度先测量，必要时使用测量值做两遍 loudnorm；单遍设置目标不等于成片实测达标。编码后重跑全解码、全片 PTS、逐切点和响度测量。静态图片正常保持不能被一律判为冻结故障。
+
+## 当前版本与证据
+
+- 记录候选路径、SHA256、最终音频 SHA256、timeline/资产版本和检查时间。实际文件必须匹配报告，不从旧报告文件名推断当前版本。
+- `technical_passed`、内容审查、`voice-continuity-review.result` 和用户候选确认分别记录；只有合格且明确接受的当前候选可晋级。
+- 如果报告存在 `superseded` 或 `active_final_release` 指向，追到实际生效版本，再核验文件哈希。保留旧版与其报告，不重新标成当前通过。
+- 对黑场和静音记录精确区间。只有脚本指定且核准的停顿、黑场和终卡可豁免，不能全局关闭检查。
+- 本地正式文件通过不代表平台已发布；公开发布另需用户授权和可见性证据。
 
 ## 视觉必查帧
 

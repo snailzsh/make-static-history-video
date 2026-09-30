@@ -45,8 +45,8 @@ def main() -> None:
         action="store_true",
         help="initialize pre-production workflow without requiring confirmed voice or visual settings",
     )
-    parser.add_argument("--voice-id", default=os.environ.get("ELEVENLABS_VOICE_ID"))
-    parser.add_argument("--model-id", default=os.environ.get("ELEVENLABS_MODEL_ID", "eleven_v3"))
+    parser.add_argument("--voice-id")
+    parser.add_argument("--model-id")
     parser.add_argument(
         "--visual-style",
         choices=("warm-xuan-vox", "american-comic-vox", "knowledge-card", "qibaishi-xieyi"),
@@ -57,6 +57,10 @@ def main() -> None:
     parser.add_argument("--height", type=int, default=1920)
     parser.add_argument("--fps", type=int, default=30)
     args = parser.parse_args()
+    if not args.voice_id and not args.guided:
+        args.voice_id = os.environ.get("ELEVENLABS_VOICE_ID")
+    if not args.model_id:
+        args.model_id = "eleven_v3" if args.guided else os.environ.get("ELEVENLABS_MODEL_ID", "eleven_v3")
     if not args.voice_id and not args.guided:
         parser.error("provide --voice-id or set ELEVENLABS_VOICE_ID")
 
@@ -142,6 +146,9 @@ def main() -> None:
 
     template = Path(__file__).resolve().parents[1] / "assets/remotion-template"
     shutil.copytree(template, root / "remotion", dirs_exist_ok=True)
+    project_templates = template.parent / "project-templates"
+    shutil.copy2(project_templates / "brief.md", root / "brief.md")
+    shutil.copy2(project_templates / "production-review.md", root / "feedback/production-review.md")
     print(root)
 
 

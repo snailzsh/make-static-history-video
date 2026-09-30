@@ -1,23 +1,31 @@
 ---
 name: make-static-history-video
-description: 从选题 对标研究 写作包和史实核查开始 制作中文静态历史信息图解说视频 正篇默认竖屏也支持用户明确指定的横版番外 支持四种固定视觉预设 使用 APIMart gpt-image-2 独立生图 ElevenLabs 连续配音与字符级对齐 Remotion 静态切镜 并检查配音连续性 逐切点和发布质量
+description: 制作和复用中文静态历史信息图解说视频生产线。用于新历史题材、系列启动、已有脚本出片、续做返工、结项 SOP 和方法迁移。覆盖史实核查、人物母版、四种视觉预设、APIMart 独立生图、ElevenLabs 配音与字符对齐、Remotion 静态切镜、逐切点 QA 及候选验收。
 ---
 
 # 静态历史信息图视频
 
 从新选题或已有材料恢复到正确阶段 将经过确认的史料或生产脚本转换为可发布成片 不把整张图的轻微缩放当成动画 不让无关图片循环顶替内容对齐
 
+## 新项目复用与结项
+
+新系列、方法迁移或结项时先读 [reusable-production-sop.md](references/reusable-production-sop.md)。复用流程、脚本和空模板；为新项目重新建立内容、音色、视觉、预算和授权，不带入旧审批、旧人物、旧时间码或项目绝对路径。科普等其他题材只迁移生产方法，另建领域核查与视觉合同。
+
+`init_project.py` 自动提供 [brief 模板](assets/project-templates/brief.md) 与 [结项模板](assets/project-templates/production-review.md)。复用时读取目标项目的 `AGENTS.md` 和当前用户要求：本项目合同优先于通用默认值。项目特批模型、停顿或渲染优化只在其批准范围内生效，不升级为全局默认。
+
+下方命令中的 `scripts/` 相对于本 Skill；在项目目录运行时使用 Skill 的绝对脚本路径。所有项目输入都指向当前项目。
+
 ## 项目引导与恢复
 
 新选题 缺少定稿脚本 或用户要求从头推进时 先读取 [guided-project-workflow.md](references/guided-project-workflow.md)
 
 - 用 `project.json.workflow` 记录当前阶段 各阶段状态 待确认问题 产物路径和历史 不创建第二套项目状态源
-- 每轮只推进当前阶段 明确现在进行到什么 系统会做什么 用户只需确认什么 将交付什么以及确认后的下一步
+- 从最早未完成阶段恢复 在已有授权内连续推进 只为影响目标、成本或验收的缺项停下相关步骤 不重复询问已批准事项
 - 对标与写作包阶段可调用现有的对标拆解 转写 搜索或写作能力 但不得声称未实际使用的模型或宿主已经参与
 - `SCRIPT` `FACT_CHECK` 和 `PRODUCTION_CONTRACT` 均确认前 不进入付费配音或批量生图
 - 重复人物必须经过独立的 `CHARACTER_ANCHORS` 阶段 需要严格一致性的角色未确认脸部与全身母版前 不得进入场景批量生图
 - 旧项目没有 `workflow` 字段时 可用 `scripts/manage_workflow.py init` 非破坏地补充 新选题使用 `init_project.py --guided` 创建 此时不提前确认音色 画风和平台
-- 阶段状态只能是 `未开始` `进行中` `待确认` `已确认` `需要返工` `已跳过` 用户说继续只批准当前展示的确认门
+- 阶段状态只能是 `未开始` `进行中` `待确认` `已确认` `需要返工` `已跳过` 用户说继续依据当前明确上下文解释 不扩大既有授权的内容、数量或成本
 
 ```bash
 python3 scripts/manage_workflow.py summary /absolute/project/path
@@ -53,7 +61,7 @@ command -v ffprobe
 - 图像底部 22% 保留低细节 字幕位于底部 18% 安全区
 - 字幕删除全部 Unicode 标点 配音文本保留必要标点控制韵律 字幕可按 `subtitle_mode` 渲染或仅保留 SRT 侧车
 - 最终配音必须通过全片 1× 听审 分块接缝复听和重叠检查 不接受断气 断字 重字 音色跳变或多音轨重叠
-- 先输出 `out/candidates/` 候选 通过 QA 后才晋级 `out/final.mp4`
+- 先输出 `out/candidates/` 候选 通过 QA 且用户确认该候选后才晋级 `out/final.mp4`
 
 用户明确指定其它非风格参数时以用户参数为准并把偏离写入 `project.json` 新增第五种视觉风格不视为普通参数偏离 必须先修改固定合同
 
@@ -106,20 +114,21 @@ python3 scripts/init_project.py /absolute/project/path \
 ### 3 生成配音
 
 1. 先试单次连续 `with-timestamps` 请求
-2. 单次请求超时或断开时 只能在镜头边界分块降级
+2. 单次请求超时、断开或经完整性核查证实内容缺失时 先查询原请求状态 再在已批准费用范围内按镜头边界恢复缺段 不盲目重提整条配音
 3. 分块时保持相同 voice ID model ID stability seed 策略和文本顺序
 4. 不自动在每个 chunk 之间插入停顿 只添加脚本明确要求的停顿
 5. 保存完整 manifest 全局镜头时间 chunk 映射 request ID 文本哈希和字符对齐
 6. 如需 `atempo` 后加速 必须同比缩放 alignment 时间
 7. 生成后必须完整听审 并对每个 chunk 接缝前后至少 3 秒复听 有断气 断字 重字 漏字 点击声 音色或节奏跳变时只重生受影响 chunk
 8. 不用旧音色 SRT 逐条生成新音色 更换音色后从新音频重建 alignment SRT 和镜头时轴
+9. 不能用返回字符数代替音频完整性检查 使用 `check_voice_alignment.py` 检查文本、时间数组和零时长尾部；技术检查与人工听审分别留证。任何插入停顿、裁剪、变速都要同步所有下游时间与音频哈希
 
 ```bash
 python3 scripts/generate_continuous_voiceover.py \
   --project project.json --out voice-continuous-candidate
 ```
 
-连续请求成功后 将该候选复制为规范 `voice/` 目录 连续请求失败时保留失败日志 将候选目录归档 然后向空的 `voice/` 目录生成分块降级版
+连续请求通过完整性检查后 将该候选复制为规范 `voice/` 目录 失败时保留请求 ID 和原响应 先恢复服务端已完成结果 再准备缺失镜头的分块方案 新增付费超出原批准范围时先确认
 
 ```bash
 python3 scripts/generate_chunked_voiceover.py \
@@ -140,7 +149,7 @@ python3 scripts/generate_chunked_voiceover.py \
    - `qibaishi-xieyi` 先从当前内容推导独有情境 再以齐白石式写意精神组织笔墨 留白和少量内容必需的颜色 不复用固定人物 道具 象征物或构图
 2. 不混搭四种预设 不提供纪念碑谷 复古报纸或未经批准的第五种风格
 3. 新项目和返工帧先按 `visual-prompt-contract.md` 建立 `prompt_contract_version: 2` 结构化场景合同 把抽象概念转换为目标年代可直接画出的现实场景 并运行 `validate_frame_prompts.py` 通过付费前预检
-4. 先生成四类压力测帧 钩子 人物 复杂地图 高密度文字
+4. 有 strict 角色时先确认脸部与全身母版 再生成引用这些母版的压力帧 覆盖钩子 人物 复杂地图 高密度文字 不适用类型说明原因
 5. 通过后再以1K独立单图四并发生成其余图片 禁止宫格裁切
 6. 每张保存服务原图和 1080×1920 RGB canonical PNG
 7. 保存 task ID 耗时 成本 原尺寸 canonical 尺寸和 SHA256
@@ -200,6 +209,8 @@ npm run still
 npm run render
 ```
 
+图片较多且合同已选择 JPEG 工作图时 在同步后、渲染前执行 `scripts/prepare_compressed_images.py /absolute/project/path`；保留原图和 PNG，详见复用 SOP。基础 `npm run render` 不保证切点关键帧和最终响度，必须执行发布 QA 中的最终编码步骤。
+
 静态版禁止背景呼吸 整图推拉 Ken Burns 视差漂浮或装饰性动画 只使用硬切或克制的静态转场
 
 最终 H.264 编码时必须在 timeline 的每个画面起始帧强制关键帧 不得只依赖编码器的自动场景切换判断
@@ -214,6 +225,7 @@ npm run render
 6. 只有 `voice-continuity-review.json` 为 pass 且全部技术检查通过才能将 `voice_continuity_passed` 和 `qc_passed` 设为 true
 7. 任何 P0 或 P1 不通过时不得复制到 `out/final.mp4`
 8. 修复后重新运行受影响阶段和最终检查
+9. 每份 QA 绑定当前视频和配音 SHA256；检查被替代版本指向，不用旧报告证明新版本。报告通过、用户确认候选、正式文件及平台公开状态分开记录
 
 ```bash
 python3 scripts/validate_project.py /absolute/project/path
@@ -261,6 +273,8 @@ out/final.mp4
 按平台分别写微信公众号 抖音和 X 文案 标题不使用标点符号 正文保留必要标点 读取 [publishing-copy.md](references/publishing-copy.md)
 
 成片发布后 如果用户提供真实平台数据 进入 `FEEDBACK` 阶段 记录实际制作时长 人工介入 播放 留存 互动和收益 只提出下一集最小可验证改动 不用一次成片或一次爆帖冻结频道模板
+
+项目结束但没有平台数据时仍填写 `feedback/production-review.md`，保留未知和未执行项。结项不要求公开发布，不自动清理文件。失败恢复、返工影响范围、成本口径和新项目启动遵循 [复用 SOP](references/reusable-production-sop.md)。
 
 ## 禁止行为
 
