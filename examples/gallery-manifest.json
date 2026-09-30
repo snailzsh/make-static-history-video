@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "purpose": "documentation examples, not reusable generation approvals",
+  "images": [
+    {
+      "file": "images/warm-xuan-vox.png",
+      "source_project": "ep01-full-vertical-static-infographic",
+      "source_object_id": "F03",
+      "role": "style",
+      "style_preset": "warm-xuan-vox",
+      "sha256": "f1dd8557439255b9ec323b05f35b4dfcea09bb313002a6c5224fbb189b1b0df8",
+      "bytes": 4232878,
+      "width": 1080,
+      "height": 1920,
+      "format": "PNG",
+      "transformation": "none; byte-identical copy"
+    },
+    {
+      "file": "images/american-comic-vox.png",
+      "source_project": "ep03-apimart-american-comic-test-v5",
+      "source_object_id": "F05",
+      "role": "style",
+      "style_preset": "american-comic-vox",
+      "sha256": "67ae432061b11977463a57108fe1feadb665bb7c8457a2a67ad6acaa4045c5be",
+      "bytes": 3476450,
+      "width": 1080,
+      "height": 1920,
+      "format": "PNG",
+      "transformation": "none; byte-identical copy"
+    },
+    {
+      "file": "images/knowledge-card.png",
+      "source_project": "ep18-full-knowledge-card-v1",
+      "source_object_id": "F01",
+      "role": "style",
+      "style_preset": "knowledge-card",
+      "sha256": "82509a89d162c046b8624810a6c9ad2c9bdb5331f3cb1e174ffa39a23668c836",
+      "bytes": 3586880,
+      "width": 1080,
+      "height": 1920,
+      "format": "PNG",
+      "transformation": "none; byte-identical copy"
+    },
+    {
+      "file": "images/qibaishi-xieyi.png",
+      "source_project": "ep42-qibaishi-xieyi-full-v1",
+      "source_object_id": "S42-F003",
+      "role": "style_and_scene",
+      "style_preset": "qibaishi-xieyi",
+      "sha256": "3d5140f84fcba82f2a6fe702d08026c696986129e08affad209241a3ad561259",
+      "bytes": 3061465,
+      "width": 1080,
+      "height": 1920,
+      "format": "PNG",
+      "transformation": "none; byte-identical copy"
+    },
+    {
+      "file": "images/scene-water-clock.png",
+      "source_project": "ep42-qibaishi-xieyi-full-v1",
+      "source_object_id": "S42-F001",
+      "role": "scene",
+      "style_preset": "qibaishi-xieyi",
+      "sha256": "5663a0ba0d3468acd24f6ff8e9a5ed7523897ecf20324f0c85e13fd9cf15b3f2",
+      "bytes": 2865903,
+      "width": 1080,
+      "height": 1920,
+      "format": "PNG",
+      "transformation": "none; byte-identical copy"
+    },
+    {
+      "file": "images/scene-report-to-emperor.png",
+      "source_project": "ep42-qibaishi-xieyi-full-v1",
+      "source_object_id": "S42-F012",
+      "role": "scene",
+      "style_preset": "qibaishi-xieyi",
+      "sha256": "2263aab07e73f2d746653a815527964b414e5292cff7cdbefe2cae91d2adb29c",
+      "bytes": 3002307,
+      "width": 1080,
+      "height": 1920,
+      "format": "PNG",
+      "transformation": "none; byte-identical copy"
+    },
+    {
+      "file": "images/character-face.png",
+      "source_project": "ep42-qibaishi-xieyi-full-v1",
+      "source_object_id": "C-HUANDI-face",
+      "role": "character_anchor",
+      "style_preset": "qibaishi-xieyi",
+      "sha256": "d48ae1d2dbf62aa06279269c96cd29651d8670bd43d4a469e56f99ac9d41c354",
+      "bytes": 2982720,
+      "width": 1080,
+      "height": 1920,
+      "format": "PNG",
+      "transformation": "none; byte-identical copy"
+    },
+    {
+      "file": "images/character-full-body.png",
+      "source_project": "ep42-qibaishi-xieyi-full-v1",
+      "source_object_id": "C-HUANDI-full-body",
+      "role": "character_anchor",
+      "style_preset": "qibaishi-xieyi",
+      "sha256": "666982ef86ea7b10757ba46f042d7ca39345a6463a5de6cc89220403cd657cdf",
+      "bytes": 2965390,
+      "width": 1080,
+      "height": 1920,
+      "format": "PNG",
+      "transformation": "none; byte-identical copy"
+    }
+  ]
+}

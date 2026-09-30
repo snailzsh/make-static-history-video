@@ -1,0 +1,31 @@
+{
+  "example_only": true,
+  "source_note": "Production text-plan excerpt for EP18 F01; not a standalone image request",
+  "frame_id": "F01",
+  "required_text": [
+    "两个选择",
+    "他替一个投降的将军说了一句公道话",
+    "皇帝",
+    "给了他两个选择"
+  ],
+  "text_plan": [
+    {
+      "role": "main_title",
+      "text": "两个选择"
+    },
+    {
+      "role": "fact_card",
+      "text": "他替一个投降的将军说了一句公道话"
+    },
+    {
+      "role": "fact_card",
+      "text": "皇帝"
+    },
+    {
+      "role": "fact_card",
+      "text": "给了他两个选择"
+    }
+  ],
+  "blank_text_containers_allowed": false,
+  "planned_text_container_count": 4
+}

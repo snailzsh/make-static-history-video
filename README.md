@@ -8,6 +8,16 @@
 
 > 这不是“一句话自动出片”的软件。它是一套可以恢复进度、保留确认门、减少整批返工的 Agent 工作方法。
 
+## 看看实际画面
+
+| 暖色宣纸 Vox | 美漫 Vox | 知识卡片 | 内容生长式齐白石写意 |
+|---|---|---|---|
+| <a href="examples/images/warm-xuan-vox.png"><img src="examples/images/warm-xuan-vox.png" width="210" alt="暖色宣纸宫廷场景"></a> | <a href="examples/images/american-comic-vox.png"><img src="examples/images/american-comic-vox.png" width="210" alt="美漫风格侯府会面"></a> | <a href="examples/images/knowledge-card.png"><img src="examples/images/knowledge-card.png" width="210" alt="两个选择知识卡片"></a> | <a href="examples/images/qibaishi-xieyi.png"><img src="examples/images/qibaishi-xieyi.png" width="210" alt="写意风格皇帝与唐衡"></a> |
+
+以上来自不同集数与风格测试，每个项目只采用一种风格。点击图片查看原图。
+
+**[查看完整实例：台词 → 分镜 → 提示词 → 人物母版 → 画面检查](examples/README.md)**，含 8 张实际产物、可检查的 JSON 节选和 3 个任务用法。
+
 ## 新项目复用与结项
 
 从这里开始：[可复用生产 SOP](references/reusable-production-sop.md)。涵盖新项目启动、阶段交付、费用台账、失败恢复、定向返工、版本核验和结项。
@@ -182,6 +192,7 @@ agents/                  Agent 展示信息
 references/              项目、人物、提示词、声音和发布规范
 scripts/                 可重复执行的制作与检查脚本
 tests/                   项目导航、人物母版和提示词预检测试
+examples/                实际图片、分镜拆解、人物母版与文字计划示例
 assets/remotion-template 静态视频合成模板
 assets/project-templates 新项目 brief 与结项模板
 ```

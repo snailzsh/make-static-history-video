@@ -1,0 +1,54 @@
+{
+  "example_only": true,
+  "source_note": "Selected production fields for S42-F003; not a complete generation project; approvals intentionally omitted",
+  "prompt_contract_version": 2,
+  "style_preset": "qibaishi-xieyi",
+  "frames": [
+    {
+      "frame_id": "S42-F003",
+      "shot_id": "S42-S03",
+      "anchor_word": "二十七岁的皇帝站起身，说",
+      "character_ids": [
+        "C-HUANDI",
+        "C-TANGHENG"
+      ],
+      "narrative_goal": "二十七岁的皇帝站起身，说要去如厕。他只叫了一个小黄门跟着，叫唐衡。",
+      "literal_scene": "一个年轻皇帝起身离席，身后一名小宦官",
+      "visual_inventory": {
+        "people": [
+          "桓帝",
+          "唐衡"
+        ],
+        "objects": [
+          "席"
+        ],
+        "environment": [
+          "当前画面所述的东汉宫城、官署、宅院或山川，空间关系由台词决定"
+        ]
+      },
+      "primary_action": "一个年轻皇帝起身离席，身后一名小宦官",
+      "action_direction": "将当前台词中的关系凝为一个静止瞬间；箭头与视线只指向本镜头的因果方向。",
+      "approved_text": [
+        "唐衡"
+      ],
+      "historical_constraints": [
+        "东汉人物采用交领袍、冠幘、束髻和席地低案；官兵只用汉代札甲、戟、弓弩与环首刀",
+        "宫城与官署为汉代夯土木构；车马无后世高马鞍和马镫",
+        "竹简木牍成束，玺印以背面或印钮示人；衣物与器物保持可辨的手工材质",
+        "人物外貌为本片生产设计，不当作经考证的历史肖像"
+      ],
+      "risk_flags": [
+        "unapproved_text",
+        "period_accuracy"
+      ],
+      "model_misread_risk": "把场景说明画成图内文字、把多个时间点拼成一张图，或加入后世服饰器物。",
+      "avoid_terms_in_prompt": [],
+      "positive_replacements": [
+        "只画当前一个静止瞬间，并按图内文字白名单呈现",
+        "无字的纸面、竹简、旗帜、印面和墙面只保留自然材质纹理"
+      ],
+      "surface_contract": "白名单外的牌匾、纸面、旗帜、印章、木牍、地图与墙面只有连续材质，不出现字形符号。",
+      "composition": "原生9:16独立单图；底部22%低细节留给字幕；齐白石式笔墨与留白随本镜头关系变化。"
+    }
+  ]
+}
